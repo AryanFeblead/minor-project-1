@@ -1,11 +1,13 @@
 $(document).ready(function () {
     $('#view_product1,#add_product1,#add_customer1,#view_customer1,#view_order1,#add_order1,#prod_nameval,#prod_imgval,#prod_qunval,#prod_priceval,#prod_detailval,#notsuccess,#success,#customer_nameval,#customer_emailval,#customer_phoneval,#customer_addressval,#customer_genderval,#prod_nameval1,#prod_imgval1,#prod_qunval1,#prod_priceval1,#prod_detailval1').hide();
     $('#product,#customer').select2();
+    var product;
 
     $('#order_btn').click(function (e) {
         e.preventDefault();
         var customer = $('#customer').val();
-        var product = $('#product').val();
+        product = $('#product').val();
+        $('#product option:selected').remove();
         $.ajax({
             type: "POST",
             url: "assets/php/ajx.php",
@@ -17,12 +19,11 @@ $(document).ready(function () {
             success: function (data) {
                 var products = JSON.parse(data);
                 var rows = '';
-                var count = 10;
+                var totalAmount = 0;
                 products.forEach(function (product, index) {
                     var price = product.price;
                     var qun = product.quantity;
                     var image = product.image;
-                    console.log(index)
                     rows += '<div class="product-item">';
                     rows += '<div class="d-flex justify-content-between">';
                     rows += '<div>';
@@ -48,24 +49,32 @@ $(document).ready(function () {
                     rows += '<button class="btn btn-danger">Remove</button>';
                     rows += '</div>';
                     rows += '</div>';
+                    totalAmount += Number(price); 
+                    
                 });
-                
-                $('.btn-success').css('display','block');
-                $('#all_prod_total').css('display','block');
+
+                $('.btn-success').css('display', 'block');
+                    $('.product-item').each(function () {
+                        var price = parseFloat($(this).find('p[id^="price_"]').text());
+                        var quantity = parseInt($(this).find('.quantity').val());
+                        totalAmount += price * quantity;
+                    });
+                    $('#all_prod_total').css('display', 'block');
+                    $('#all_prod_total').text('Total Amount: ' + totalAmount.toFixed(2));
+
                 $('#customer').attr('disabled', 'disabled');
                 $('#all_order').append(rows);
-    
-                $('.quantity').change(function () {
-                    var index = $(this).data('index');
-                    var qunid = $(this).val();
-                    var price = parseFloat($('#price_' + index).text());
-                    var total = price * qunid;
-                    $('#subtotal_' + index).text(total.toFixed(2));
-                });
-                $('.del').click(function() {
-                    $('.btn-success').hide();
-                    $('#all_prod_total').hide();
-                    $(this).parent().remove();
+
+
+                $('.del').click(function () {
+                    var removedProduct = $(this).closest('.product-item');
+                    var productName = removedProduct.find('h4').text();
+                    var productId = removedProduct.find('.quantity').data('index');
+                    $('#checkout').hide();
+
+                    $('#product').append('<option value="' + productId + '">' + productName + '</option>');
+
+                    removedProduct.remove(); // Remove the product item
                 });
             },
             error: function () {
@@ -73,18 +82,27 @@ $(document).ready(function () {
             }
         });
     });
+    $(document).on('change', '.quantity', function () {
+        var parent = $(this).closest('.product-item');
+        var index = $(this).data('index');
+        var qunid = $(this).val();
+        var price = parseFloat(parent.find('#price_' + index).text());
+        var total = price * qunid;
+        parent.find('#subtotal_' + index).text(total.toFixed(2));
+    });
+
 
     $('#checkout').click(function (e) {
         e.preventDefault();
+        product = product
         var customer = $('#customer').val();
-        var product = $('#product').val();
         var prod_qun = $('.quantity').val();
         var prod_price = $('#price_0').text();
         var prod_subtotal = $('#subtotal_0').text();
         $.ajax({
             type: "POST",
             url: "assets/php/ajx.php",
-            data:  {
+            data: {
                 customer: customer,
                 product: product,
                 prod_qun: prod_qun,
@@ -464,7 +482,7 @@ $(document).ready(function () {
         $('#add_order1').hide()
         $('#view_order1').show()
 
-         $.ajax({
+        $.ajax({
             type: "POST",
             url: "assets/php/ajx.php",
             data: {
@@ -472,7 +490,19 @@ $(document).ready(function () {
             },
             success: function (data) {
                 data1 = $.parseJSON(data);
-                
+                var rows = '';
+                $.each(data1, function (index, user1) {
+                    rows += '<tr>';
+                    rows += '<td>' + user1.customer_product_id + '</td>';
+                    rows += '<td>' + user1.customer_name + '</td>';
+                    rows += '<td>' + user1.prod_name + '</td>';
+                    rows += '<td>' + user1.prod_price + '</td>';
+                    rows += '<td>' + user1.prod_quantity + '</td>';
+                    rows += '<td>' + user1.prod_subtotal + '</td>';
+                    rows += '<td><a data-id="' + user1.customer_product_id + '" class="btn btn-primary edit1">Edit</a></td>';
+                    rows += '<td><a data-id="' + user1.customer_product_id + '" class="btn btn-danger delete1">Delete</a></td>';
+                    rows += '</tr>';
+                });
 
                 $('#result3').html(rows);
                 $('#order_tbl').DataTable();

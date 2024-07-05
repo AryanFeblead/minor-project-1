@@ -331,5 +331,6 @@ function view_order(){
             $users[] = $row;
         }
     }
+    print_r($users);die;
     echo json_encode($users);
 }

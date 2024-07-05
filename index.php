@@ -434,8 +434,7 @@ require('assets/php/conn.php');
               </div>
             </div>
             <div>
-              <h4 id="all_prod_total" style="display: none;">Total Amount : </h4>
-              <p id="all_prod_total1" style="display: none;"></p>
+              <h4 id="all_prod_total" style="display: none;"></h4>
               <button class="btn btn-success float-end mt-2" id="checkout" style="display: none;">Submit Order</button>
             </div>
           </div>
