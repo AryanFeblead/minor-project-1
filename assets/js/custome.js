@@ -6,7 +6,6 @@ $(document).ready(function () {
         e.preventDefault();
         var customer = $('#customer').val();
         var product = $('#product').val();
-
         $.ajax({
             type: "POST",
             url: "assets/php/ajx.php",
@@ -16,55 +15,57 @@ $(document).ready(function () {
                 actionName: 'order'
             },
             success: function (data) {
-                console.log(data);
                 var products = JSON.parse(data);
-                var rows = `
-                    <div class="d-flex justify-content-between">
-                        <p>Item</p>
-                        <p>Price</p>
-                        <p>Quantity</p>
-                        <p>Subtotal</p>
-                    </div>`;
-
+                var rows = '';
+                var count = 10;
                 products.forEach(function (product, index) {
                     var price = product.price;
                     var qun = product.quantity;
                     var image = product.image;
-                    rows += `
-                        <div class="product-item">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <img src="assets/php/uploads/${image[0]}" height="75px" width="75px">
-                                    <h4>${product.name}</h4>
-                                </div>
-                                <div>
-                                    <p id="price_${index}">${price}</p>
-                                </div>
-                                <div>
-                                    <select class="form-select quantity" data-index="${index}" aria-label="Default select example">`;
-
-                    for (var i = 1; i <= qun; i++) {
-                        rows += `<option value="${i}">${i}</option>`;
+                    console.log(index)
+                    rows += '<div class="product-item">';
+                    rows += '<div class="d-flex justify-content-between">';
+                    rows += '<div>';
+                    rows += '<img src="assets/php/uploads/' + image[0] + '" height="75px" width="75px">';
+                    rows += '<h4>' + product.name + '</h4>';
+                    rows += '</div>';
+                    rows += '<div>';
+                    rows += '<p id="price_' + index + '">' + price + '</p>';
+                    rows += '</div>';
+                    rows += '<div>';
+                    rows += '<select class="form-select quantity" data-index="' + index + '" aria-label="Default select example">';
+                    rows += '<option selected value="' + 1 + '">' + 1 + '</option>';
+                    for (var i = 2; i <= qun; i++) {
+                        rows += '<option value="' + i + '">' + i + '</option>';
                     }
-
-                    rows += `</select>
-                                </div>
-                                <div>
-                                    <p id="subtotal_${index}">${price}</p>
-                                </div>
-                            </div>
-                        </div>`;
+                    rows += '</select>';
+                    rows += '</div>';
+                    rows += '<div>';
+                    rows += '<p id="subtotal_' + index + '">' + price + '</p>';
+                    rows += '</div>';
+                    rows += '</div>';
+                    rows += '<div class="del text-end">';
+                    rows += '<button class="btn btn-danger">Remove</button>';
+                    rows += '</div>';
+                    rows += '</div>';
                 });
-
+                
+                $('.btn-success').css('display','block');
+                $('#all_prod_total').css('display','block');
+                $('#customer').attr('disabled', 'disabled');
                 $('#all_order').append(rows);
-
+    
                 $('.quantity').change(function () {
                     var index = $(this).data('index');
                     var qunid = $(this).val();
                     var price = parseFloat($('#price_' + index).text());
                     var total = price * qunid;
                     $('#subtotal_' + index).text(total.toFixed(2));
-                    console.log(total);
+                });
+                $('.del').click(function() {
+                    $('.btn-success').hide();
+                    $('#all_prod_total').hide();
+                    $(this).parent().remove();
                 });
             },
             error: function () {
@@ -73,7 +74,39 @@ $(document).ready(function () {
         });
     });
 
-
+    $('#checkout').click(function (e) {
+        e.preventDefault();
+        var customer = $('#customer').val();
+        var product = $('#product').val();
+        var prod_qun = $('.quantity').val();
+        var prod_price = $('#price_0').text();
+        var prod_subtotal = $('#subtotal_0').text();
+        $.ajax({
+            type: "POST",
+            url: "assets/php/ajx.php",
+            data:  {
+                customer: customer,
+                product: product,
+                prod_qun: prod_qun,
+                prod_price: prod_price,
+                prod_subtotal: prod_subtotal,
+                actionName: 'checkout'
+            },
+            success: function (data) {
+                var data1 = JSON.parse(data);
+                if (data1.status == 'success') {
+                    $('.product-item').hide();
+                    $('.btn-success').hide();
+                    $('#all_prod_total').hide();
+                    $('#success').show().delay(2000).fadeOut().html("Product Checkout Successfully");
+                }
+            },
+            error: function () {
+                $("#prod_form")[0].reset();
+                $('#notsuccess').show().html('Product Added Failed')
+            }
+        });
+    });
 
     $('#add_product').click(function (e) {
         e.preventDefault();
@@ -430,6 +463,99 @@ $(document).ready(function () {
         $('#view_customer1').hide()
         $('#add_order1').hide()
         $('#view_order1').show()
+
+         $.ajax({
+            type: "POST",
+            url: "assets/php/ajx.php",
+            data: {
+                actionName: 'view_order'
+            },
+            success: function (data) {
+                data1 = $.parseJSON(data);
+                
+
+                $('#result3').html(rows);
+                $('#order_tbl').DataTable();
+
+                $('.edit1').on('click', function () {
+                    var id = $(this).data('id');
+                    fetchDatacustomer(id);
+                    $(document).on('click', '#btn_update1', function () {
+                        if ($('#customer_name').val() == '') {
+                            $('#customer_nameval1').show().css('color', 'red');
+                        }
+                        if ($('#prod_qun1').val() == '') {
+                            $('#prod_qunval1').show().css('color', 'red');
+                        }
+                        if ($('#prod_price1').val() == '') {
+                            $('#prod_priceval1').show().css('color', 'red');
+                        }
+                        if ($('#prod_detail1').val() == '') {
+                            $('#prod_detailval1').show().css('color', 'red');
+                        }
+                        if ($('#prod_img1').val() == '') {
+                            $('#prod_imgval1').show().css('color', 'red');
+                        } else {
+                            var formData = new FormData();
+                            formData.append('customer_id', id);
+                            formData.append('actionName', 'update');
+                            $.ajax({
+                                url: 'assets/php/ajx.php',
+                                method: 'post',
+                                data: formData,
+                                contentType: false,
+                                processData: false,
+                                success: function (data) {
+                                    $('#prod_nameval1,#prod_imgval1,#prod_qunval1,#prod_priceval1,#prod_detailval1').hide()
+                                    $('#Update').modal('hide');
+                                    $('.alert-success').show().fadeOut(function () {
+                                        // window.location.reload()
+                                    });
+                                    $('.alert-success').html("Data Updated Successfully");
+                                    $('.alert-success').hide();
+                                },
+                                error: function () {
+                                    $('.alert-danger').show().delay(2000).fadeOut();
+                                    $('.alert-danger').html("Data not Updated!!!");
+                                    $('.alert-danger').hide();
+                                }
+                            });
+                        }
+                    })
+                });
+                $('.delete1').on('click', function (e) {
+                    e.preventDefault();
+                    var id = $(this).data('id');
+                    console.log(id)
+                    if (confirm("Are you sure?")) {
+                        $.ajax({
+                            type: "POST",
+                            url: "assets/php/ajx.php",
+                            data: {
+                                id: id,
+                                actionName: 'customer_delete'
+                            },
+                            success: function (response) {
+                                var data = $.parseJSON(response);
+                                if (data.status === "success") {
+                                    $('#success').show().delay(2000).fadeOut();
+                                    $('#success').html("Customer Deleted Successfully");
+                                    window.location.reload();
+                                }
+                            },
+                            error: function (status, error) {
+                                +                                console.error("AJAX Error: " + status + error);
+                            }
+                        });
+                    } else {
+                        return false;
+                    }
+                })
+            },
+            error: function (status, error) {
+                console.error("Fetch Error: " + status + error);
+            }
+        });
     });
 
     function fetchData(id) {

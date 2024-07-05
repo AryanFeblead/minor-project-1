@@ -426,36 +426,35 @@ require('assets/php/conn.php');
             <button id="order_btn" class="btn btn-primary mx-5">Add Product</button>
             <div id="all_order">
               <h1 class="text-center">Cart Items</h1>
+              <div class="d-flex justify-content-between">
+                <p>Item</p>
+                <p>Price</p>
+                <p>Quantity</p>
+                <p>Subtotal</p>
+              </div>
+            </div>
+            <div>
+              <h4 id="all_prod_total" style="display: none;">Total Amount : </h4>
+              <p id="all_prod_total1" style="display: none;"></p>
+              <button class="btn btn-success float-end mt-2" id="checkout" style="display: none;">Submit Order</button>
             </div>
           </div>
           <div id="view_order1">
-            <table class="table">
+          <table id="order_tbl" class="table">
               <thead>
                 <tr>
-                  <th scope="col">#</th>
-                  <th scope="col">First</th>
-                  <th scope="col">Last</th>
-                  <th scope="col">Handle</th>
+                  <th scope="col">Order ID</th>
+                  <th scope="col">Customer Name</th>
+                  <th scope="col">Product Name</th>
+                  <th scope="col">Product Price</th>
+                  <th scope="col">Product Quantity</th>
+                  <th scope="col">Product Subtotal</th>
+                  <th scope="col">Product Edit</th>
+                  <th scope="col">Product Delete</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <th scope="row">1</th>
-                  <td>Mark</td>
-                  <td>Otto</td>
-                  <td>@mdo</td>
-                </tr>
-                <tr>
-                  <th scope="row">2</th>
-                  <td>Jacob</td>
-                  <td>Thornton</td>
-                  <td>@fat</td>
-                </tr>
-                <tr>
-                  <th scope="row">3</th>
-                  <td colspan="2">Larry the Bird</td>
-                  <td>@twitter</td>
-                </tr>
+              <tbody id="result3">
+
               </tbody>
             </table>
           </div>

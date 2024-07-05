@@ -279,7 +279,7 @@ function order()
 
     $query = "SELECT prod_name, prod_img, prod_quantity, prod_price FROM product_tbl WHERE prod_id IN ($product_id)";
     $result = mysqli_query($conn, $query);
-    
+
     $products = [];
     while ($row = mysqli_fetch_assoc($result)) {
         $products[] = [
@@ -289,6 +289,47 @@ function order()
             'price' => $row['prod_price']
         ];
     }
-    
+
     echo json_encode($products);
+}
+
+function checkout()
+{
+    global $conn;
+    $customer_id = $_POST['customer'];
+    $product_id = $_POST['product'];
+    $prod_quantity = $_POST['prod_qun'];
+    $prod_price = $_POST['prod_price'];
+    $prod_subtotal = $_POST['prod_subtotal'];
+
+    $select1 = mysqli_query($conn, "SELECT customer_name FROM customer_tbl where customer_id = '$customer_id'");
+    $select2 = mysqli_query($conn, "SELECT prod_name FROM product_tbl where prod_id = '$product_id'");
+
+    while ($row = mysqli_fetch_assoc($select1)) {
+        $customer_name = $row;
+    }
+    while ($row1 = mysqli_fetch_assoc($select2)) {
+        $prod_name = $row1;
+    }
+    $customer_name = implode('', $customer_name);
+    $prod_name = implode('', $prod_name);
+    $sql = "INSERT INTO  customer_product_tbl (customer_name,prod_name,prod_quantity,prod_price,prod_subtotal) values ('$customer_name','$prod_name','$prod_quantity','$prod_price','$prod_subtotal')";
+    if (mysqli_query($conn, $sql)) {
+        echo json_encode(["status" => "success", "message" => "User added successfully"]);
+    } else {
+        echo json_encode(["status" => "error"]);
+    }
+}
+
+function view_order(){
+    global $conn;
+    $select = mysqli_query($conn, "SELECT * FROM customer_product_tbl");
+    $users = [];
+
+    if (mysqli_num_rows($select) > 0) {
+        while ($row = mysqli_fetch_assoc($select)) {
+            $users[] = $row;
+        }
+    }
+    echo json_encode($users);
 }

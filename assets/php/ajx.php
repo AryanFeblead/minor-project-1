@@ -32,4 +32,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['actionName']) && $_POST['actionName'] == 'order') {
         order();
     }
+    if (isset($_POST['actionName']) && $_POST['actionName'] == 'checkout') {
+        checkout();
+    }
+    if (isset($_POST['actionName']) && $_POST['actionName'] == 'view_order') {
+        view_order();
+    }
 }
