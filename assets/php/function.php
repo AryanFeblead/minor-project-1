@@ -325,12 +325,10 @@ function view_order(){
     global $conn;
     $select = mysqli_query($conn, "SELECT * FROM customer_product_tbl");
     $users = [];
-
     if (mysqli_num_rows($select) > 0) {
-        while ($row = mysqli_fetch_assoc($select)) {
-            $users[] = $row;
+        while ($rows = mysqli_fetch_assoc($select)) {
+            $users[] = $rows;
         }
     }
-    print_r($users);die;
     echo json_encode($users);
 }

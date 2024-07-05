@@ -489,18 +489,19 @@ $(document).ready(function () {
                 actionName: 'view_order'
             },
             success: function (data) {
+                console.log(data);
                 data1 = $.parseJSON(data);
                 var rows = '';
-                $.each(data1, function (index, user1) {
+                $.each(data1, function (index, data1) {
                     rows += '<tr>';
-                    rows += '<td>' + user1.customer_product_id + '</td>';
-                    rows += '<td>' + user1.customer_name + '</td>';
-                    rows += '<td>' + user1.prod_name + '</td>';
-                    rows += '<td>' + user1.prod_price + '</td>';
-                    rows += '<td>' + user1.prod_quantity + '</td>';
-                    rows += '<td>' + user1.prod_subtotal + '</td>';
-                    rows += '<td><a data-id="' + user1.customer_product_id + '" class="btn btn-primary edit1">Edit</a></td>';
-                    rows += '<td><a data-id="' + user1.customer_product_id + '" class="btn btn-danger delete1">Delete</a></td>';
+                    rows += '<td>' + data1.customer_product_id + '</td>';
+                    rows += '<td>' + data1.customer_name + '</td>';
+                    rows += '<td>' + data1.prod_name + '</td>';
+                    rows += '<td>' + data1.prod_price + '</td>';
+                    rows += '<td>' + data1.prod_quantity + '</td>';
+                    rows += '<td>' + data1.prod_subtotal + '</td>';
+                    rows += '<td><a data-id="' + data1.customer_product_id + '" class="btn btn-primary edit1">Edit</a></td>';
+                    rows += '<td><a data-id="' + data1.customer_product_id + '" class="btn btn-danger delete1">Delete</a></td>';
                     rows += '</tr>';
                 });
 
