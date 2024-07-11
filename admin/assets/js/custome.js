@@ -2,7 +2,7 @@ $(document).ready(function() {
     $('#view_product1,#add_product1,#add_customer1,#view_customer1,#view_order1,#add_order1,#prod_nameval,#prod_imgval,#prod_qunval,#prod_priceval,#prod_detailval,#notsuccess,#success,#customer_nameval,#customer_emailval,#customer_phoneval,#customer_addressval,#customer_genderval,#prod_nameval1,#prod_imgval1,#prod_qunval1,#prod_priceval1,#prod_detailval1,#report1').hide();
     $('#product,#customer').select2();
 
-    var productsArray = []; // Array to store product details
+    var productsArray = [];
 
     $('#order_btn').click(function(e) {
         e.preventDefault();
