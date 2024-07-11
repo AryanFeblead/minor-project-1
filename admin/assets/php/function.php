@@ -1,6 +1,6 @@
 <?php
 
-require('conn.php');
+require ('conn.php');
 
 function add_product()
 {
@@ -11,7 +11,7 @@ function add_product()
         $targetDir = "uploads/";
         $allowTypes = array('jpg', 'png', 'jpeg', 'gif');
 
-        $statusMsg = $errorMsg  = $errorUpload = $errorUploadType = '';
+        $statusMsg = $errorMsg = $errorUpload = $errorUploadType = '';
         $insertValuesSQL = array();
         $fileNames = array_filter($_FILES['prod_img']['name']);
         if (!empty($fileNames)) {
@@ -64,6 +64,8 @@ function add_customer()
 {
     global $conn;
     if (isset($_POST['customer_name'])) {
+        $x = true;
+        $y = true;
         $customer_name = $_POST['customer_name'];
         $customer_email = $_POST['customer_email'];
         $customer_phone = $_POST['customer_phone'];
@@ -274,54 +276,99 @@ function updateData()
 function order()
 {
     global $conn;
-    $customer_id = $_POST['customer'];
-    $product_id = $_POST['product'];
 
-    $query = "SELECT prod_name, prod_img, prod_quantity, prod_price FROM product_tbl WHERE prod_id IN ($product_id)";
+    // Assuming $_POST['customer'] is sanitized
+    $customer_id = $_POST['customer'];
+    // Assuming $_POST['product'] is comma-separated list of product IDs
+    $product_ids = $_POST['productId'];
+
+    // Constructing the SQL query with IN clause
+    $query = "SELECT prod_name, prod_img, prod_quantity, prod_price FROM product_tbl WHERE prod_id IN ($product_ids)";
     $result = mysqli_query($conn, $query);
 
-    $products = [];
-    while ($row = mysqli_fetch_assoc($result)) {
-        $products[] = [
-            'name' => $row['prod_name'],
-            'image' => json_decode($row['prod_img'], true),
-            'quantity' => $row['prod_quantity'],
-            'price' => $row['prod_price']
-        ];
-    }
+    if ($result) {
+        $products = [];
+        while ($row = mysqli_fetch_assoc($result)) {
+            // Decode JSON string to array for images
+            $images = json_decode($row['prod_img'], true);
 
-    echo json_encode($products);
+            // Prepare product data
+            $product = [
+                'name' => $row['prod_name'],
+                'image' => $images, // Assuming prod_img is a JSON array of image paths
+                'quantity' => $row['prod_quantity'],
+                'price' => $row['prod_price']
+            ];
+
+            $products[] = $product;
+        }
+
+        // Return products as JSON
+        echo json_encode($products);
+    } else {
+        // Handle query error
+        echo json_encode(['error' => 'Failed to fetch products']);
+    }
 }
 
 function checkout()
 {
     global $conn;
+
+    // Assuming $_POST['products'] is the array of products sent from frontend
     $customer_id = $_POST['customer'];
-    $product_id = $_POST['product'];
-    $prod_quantity = $_POST['prod_qun'];
-    $prod_price = $_POST['prod_price'];
-    $prod_subtotal = $_POST['prod_subtotal'];
+    $products = $_POST['productsArray']; // Array of products
 
-    $select1 = mysqli_query($conn, "SELECT customer_name FROM customer_tbl where customer_id = '$customer_id'");
-    $select2 = mysqli_query($conn, "SELECT prod_name FROM product_tbl where prod_id = '$product_id'");
+    // Initialize arrays to store product details
+    $prod_names = [];
+    $prod_quantities = [];
+    $prod_prices = [];
+    $prod_subtotals = [];
 
-    while ($row = mysqli_fetch_assoc($select1)) {
-        $customer_name = $row;
+    foreach ($products as $product) {
+        // Escape values for safety (prevent SQL injection)
+        $prod_name = mysqli_real_escape_string($conn, $product['name']);
+        $prod_quantity = mysqli_real_escape_string($conn, $product['quantity']);
+        $prod_price = mysqli_real_escape_string($conn, $product['price']);
+        $prod_subtotal = mysqli_real_escape_string($conn, $product['subtotal']);
+
+        // Store product details in arrays
+        $prod_names[] = $prod_name;
+        $prod_quantities[] = $prod_quantity;
+        $prod_prices[] = $prod_price;
+        $prod_subtotals[] = $prod_subtotal;
     }
-    while ($row1 = mysqli_fetch_assoc($select2)) {
-        $prod_name = $row1;
+
+    // Retrieve customer name from database
+    $select_customer = mysqli_query($conn, "SELECT customer_name FROM customer_tbl WHERE customer_id = '$customer_id'");
+    $customer_name = mysqli_fetch_assoc($select_customer)['customer_name'];
+
+    // Insert each product into the database
+    $success = true;
+    for ($i = 0; $i < count($products); $i++) {
+        $prod_name = $prod_names[$i];
+        $prod_quantity = $prod_quantities[$i];
+        $prod_price = $prod_prices[$i];
+        $prod_subtotal = $prod_subtotals[$i];
+
+        // Insert each product into customer_product_tbl
+        $sql = "INSERT INTO customer_product_tbl (customer_name, prod_name, prod_quantity, prod_price, prod_subtotal)
+                VALUES ('$customer_name', '$prod_name', '$prod_quantity', '$prod_price', '$prod_subtotal')";
+
+        if (!mysqli_query($conn, $sql)) {
+            $success = false;
+            break; // Exit loop on failure
+        }
     }
-    $customer_name = implode('', $customer_name);
-    $prod_name = implode('', $prod_name);
-    $sql = "INSERT INTO  customer_product_tbl (customer_name,prod_name,prod_quantity,prod_price,prod_subtotal) values ('$customer_name','$prod_name','$prod_quantity','$prod_price','$prod_subtotal')";
-    if (mysqli_query($conn, $sql)) {
-        echo json_encode(["status" => "success", "message" => "User added successfully"]);
+
+    if ($success) {
+        echo json_encode(["status" => "success", "message" => "Products added successfully"]);
     } else {
-        echo json_encode(["status" => "error"]);
+        echo json_encode(["status" => "error", "message" => "Failed to add products"]);
     }
 }
-
-function view_order(){
+function view_order()
+{
     global $conn;
     $select = mysqli_query($conn, "SELECT * FROM customer_product_tbl");
     $users = [];
@@ -331,4 +378,18 @@ function view_order(){
         }
     }
     echo json_encode($users);
+}
+
+function report()
+{
+    global $conn;
+    $results = mysqli_query($conn, "SELECT * FROM customer_product_tbl");
+    $productData = [];
+
+    foreach ($results as $row) {
+        $productData[] = $row;
+    }
+
+    $productJson = json_encode($productData);
+    echo json_encode($productJson);
 }

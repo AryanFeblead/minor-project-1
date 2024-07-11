@@ -1,5 +1,6 @@
 <?php
-require('assets/php/conn.php');
+
+require ('assets/php/conn.php');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -18,7 +19,10 @@ require('assets/php/conn.php');
   <script src="assets/js/core/popper.min.js"></script>
   <script src="assets/js/core/bootstrap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/jquery.dataTables.min.js" integrity="sha512-BkpSL20WETFylMrcirBahHfSnY++H2O1W+UnEEO4yNIl+jI2+zowyoGJpbtk6bx97fBXf++WJHSSK2MV4ghPcg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/jquery.dataTables.min.js"
+    integrity="sha512-BkpSL20WETFylMrcirBahHfSnY++H2O1W+UnEEO4yNIl+jI2+zowyoGJpbtk6bx97fBXf++WJHSSK2MV4ghPcg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- jQuery Scrollbar -->
   <script src="assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
@@ -62,7 +66,7 @@ require('assets/php/conn.php');
         ],
         urls: ["assets/css/fonts.min.css"],
       },
-      active: function() {
+      active: function () {
         sessionStorage.fonts = true;
       },
     });
@@ -183,7 +187,7 @@ require('assets/php/conn.php');
             <li class="nav-item">
               <a data-bs-toggle="collapse" href="#tables">
                 <i class="fas fa-table"></i>
-                <p>Report</p>
+                <p id="report">Report</p>
               </a>
             </li>
           </ul>
@@ -298,7 +302,8 @@ require('assets/php/conn.php');
               </div>
               <div class="mb-3">
                 <label for="exampleInputEmail1" class="form-label">Product Price</label>
-                <input type="number" class="form-control" id="prod_price" name="prod_price" aria-describedby="emailHelp">
+                <input type="number" class="form-control" id="prod_price" name="prod_price"
+                  aria-describedby="emailHelp">
                 <div id="prod_priceval">
                   Please choose a product price.
                 </div>
@@ -350,7 +355,8 @@ require('assets/php/conn.php');
               </div>
               <div class="mb-3">
                 <label for="exampleInputEmail1" class="form-label">Customer Phone</label>
-                <input type="number" class="form-control" id="customer_phone" name="customer_phone" aria-describedby="emailHelp">
+                <input type="number" class="form-control" id="customer_phone" name="customer_phone"
+                  aria-describedby="emailHelp">
                 <div id="customer_phoneval">
                   Please choose a customer phone.
                 </div>
@@ -358,9 +364,11 @@ require('assets/php/conn.php');
               <div class="mb-3">
                 <label for="exampleInputEmail1" class="form-label">Customer Gender - </label>
                 <label for="exampleInputEmail1" class="form-label">Male</label>
-                <input type="radio" name="customer_gender[]" class="customer_gender" value="male" id="customer_gender1" aria-describedby="emailHelp">
+                <input type="radio" name="customer_gender[]" class="customer_gender" value="male" id="customer_gender1"
+                  aria-describedby="emailHelp">
                 <label for="exampleInputEmail1" class="form-label">Female</label>
-                <input type="radio" id="customer_gender2" name="customer_gender[]" class="customer_gender" value="female" id="customer_gender2" aria-describedby="emailHelp">
+                <input type="radio" id="customer_gender2" name="customer_gender[]" class="customer_gender"
+                  value="female" id="customer_gender2" aria-describedby="emailHelp">
                 <div id="customer_genderval">
                   Please choose a customer gender.
                 </div>
@@ -372,7 +380,7 @@ require('assets/php/conn.php');
                   Please choose a customer city.
                 </div>
               </div>
-              <button type="submit" class="btn btn-primary">Add Product</button>
+              <button type="submit" class="btn btn-primary">Add Customer</button>
             </form>
           </div>
           <div id="view_customer1" class="container" style="width: 100%;">
@@ -439,7 +447,7 @@ require('assets/php/conn.php');
             </div>
           </div>
           <div id="view_order1">
-          <table id="order_tbl" class="table">
+            <table id="order_tbl" class="table">
               <thead>
                 <tr>
                   <th scope="col">Order ID</th>
@@ -457,6 +465,11 @@ require('assets/php/conn.php');
               </tbody>
             </table>
           </div>
+          <div id="report1">
+            <div style="width:600px; margin:50px auto; border:1px solid #ddd;">
+              <canvas id="productChart"></canvas>
+            </div>
+          </div>
         </div>
         <div class="modal fade" id="Update">
           <div class="modal-dialog">
@@ -471,14 +484,16 @@ require('assets/php/conn.php');
                   <div class="row g-3">
                     <div class="col-md-12">
                       <label for="contact">Product Name</label>
-                      <input type="text" class="form-control mt-2" name="prod_name1" id="prod_name1" Placeholder="Enter Name *" required>
+                      <input type="text" class="form-control mt-2" name="prod_name1" id="prod_name1"
+                        Placeholder="Enter Name *" required>
                       <div id="prod_nameval1">
                         Please choose a product name.
                       </div>
                     </div>
                     <div class="col-md-12">
                       <label for="contact">Product Image</label>
-                      <input type="file" class="form-control mt-2" name="prod_img1" id="prod_img1" Placeholder="User Email *" required>
+                      <input type="file" class="form-control mt-2" name="prod_img1" id="prod_img1"
+                        Placeholder="User Email *" required>
                       <div id="prod_imgval1">
                         Please choose a product image.
                       </div>
@@ -530,14 +545,16 @@ require('assets/php/conn.php');
                   <div class="row g-3">
                     <div class="col-md-12">
                       <label for="contact">Customer Name</label>
-                      <input type="text" class="form-control mt-2" name="customer_name1" id="customer_name1" Placeholder="Enter Name *" required>
+                      <input type="text" class="form-control mt-2" name="customer_name1" id="customer_name1"
+                        Placeholder="Enter Name *" required>
                       <div id="prod_nameval1">
                         Please choose a customer name.
                       </div>
                     </div>
                     <div class="col-md-12">
                       <label for="contact">Customer Email</label>
-                      <input type="email" class="form-control mt-2" name="customer_email1" id="customer_email1" Placeholder="User Email *" required>
+                      <input type="email" class="form-control mt-2" name="customer_email1" id="customer_email1"
+                        Placeholder="User Email *" required>
                       <div id="prod_imgval1">
                         Please choose a Customer Email.
                       </div>
@@ -581,7 +598,6 @@ require('assets/php/conn.php');
     <!-- End Custom template -->
   </div>
   <!--   Core JS Files   -->
-
   <script>
     $("#lineChart").sparkline([102, 109, 120, 99, 110, 105, 115], {
       type: "line",

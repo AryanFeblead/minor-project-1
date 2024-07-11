@@ -1,132 +1,178 @@
-$(document).ready(function () {
-    $('#view_product1,#add_product1,#add_customer1,#view_customer1,#view_order1,#add_order1,#prod_nameval,#prod_imgval,#prod_qunval,#prod_priceval,#prod_detailval,#notsuccess,#success,#customer_nameval,#customer_emailval,#customer_phoneval,#customer_addressval,#customer_genderval,#prod_nameval1,#prod_imgval1,#prod_qunval1,#prod_priceval1,#prod_detailval1').hide();
+$(document).ready(function() {
+    $('#view_product1,#add_product1,#add_customer1,#view_customer1,#view_order1,#add_order1,#prod_nameval,#prod_imgval,#prod_qunval,#prod_priceval,#prod_detailval,#notsuccess,#success,#customer_nameval,#customer_emailval,#customer_phoneval,#customer_addressval,#customer_genderval,#prod_nameval1,#prod_imgval1,#prod_qunval1,#prod_priceval1,#prod_detailval1,#report1').hide();
     $('#product,#customer').select2();
-    var product;
 
-    $('#order_btn').click(function (e) {
+    var productsArray = []; // Array to store product details
+
+    $('#order_btn').click(function(e) {
         e.preventDefault();
         var customer = $('#customer').val();
-        product = $('#product').val();
+        var productId = $('#product').val();
+
         $('#product option:selected').remove();
+
         $.ajax({
             type: "POST",
             url: "assets/php/ajx.php",
             data: {
                 customer: customer,
-                product: product,
+                productId: productId,
                 actionName: 'order'
             },
-            success: function (data) {
-                var products = JSON.parse(data);
-                var rows = '';
-                var totalAmount = 0;
-                products.forEach(function (product, index) {
-                    var price = product.price;
-                    var qun = product.quantity;
-                    var image = product.image;
-                    rows += '<div class="product-item">';
-                    rows += '<div class="d-flex justify-content-between">';
-                    rows += '<div>';
-                    rows += '<img src="assets/php/uploads/' + image[0] + '" height="75px" width="75px">';
-                    rows += '<h4>' + product.name + '</h4>';
-                    rows += '</div>';
-                    rows += '<div>';
-                    rows += '<p id="price_' + index + '">' + price + '</p>';
-                    rows += '</div>';
-                    rows += '<div>';
-                    rows += '<select class="form-select quantity" data-index="' + index + '" aria-label="Default select example">';
-                    rows += '<option selected value="' + 1 + '">' + 1 + '</option>';
+            success: function(data) {
+                try {
+                    var product = JSON.parse(data)[0];
+
+                    var price = parseFloat(product.price);
+                    var qun = parseInt(product.quantity, 10);
+
+                    var productObj = {
+                        id: productId,
+                        name: product.name,
+                        price: price,
+                        quantity: 1, // Default quantity when ordered
+                        subtotal: price * 1 // Default subtotal based on quantity 1
+                    };
+
+                    productsArray.push(productObj); // Push the product object to array
+
+                    var row = '<div class="product-item">';
+                    row += '<div class="d-flex justify-content-between">';
+                    row += '<div>';
+                    row += '<img src="assets/php/uploads/' + product.image[0] + '" height="75px" width="75px">';
+                    row += '<h4>' + product.name + '</h4>';
+                    row += '</div>';
+                    row += '<div>';
+                    row += '<p id="price_' + productId + '">' + price + '</p>';
+                    row += '</div>';
+                    row += '<div>';
+                    row += '<select class="form-select quantity" data-index="' + productId + '" aria-label="Default select example">';
+                    row += '<option selected value="' + 1 + '">' + 1 + '</option>';
                     for (var i = 2; i <= qun; i++) {
-                        rows += '<option value="' + i + '">' + i + '</option>';
+                        row += '<option value="' + i + '">' + i + '</option>';
                     }
-                    rows += '</select>';
-                    rows += '</div>';
-                    rows += '<div>';
-                    rows += '<p id="subtotal_' + index + '">' + price + '</p>';
-                    rows += '</div>';
-                    rows += '</div>';
-                    rows += '<div class="del text-end">';
-                    rows += '<button class="btn btn-danger">Remove</button>';
-                    rows += '</div>';
-                    rows += '</div>';
-                    totalAmount += Number(price); 
-                    
-                });
+                    row += '</select>';
+                    row += '</div>';
+                    row += '<div>';
+                    row += '<p id="subtotal_' + productId + '">' + (price * 1).toFixed(2) + '</p>';
+                    row += '</div>';
+                    row += '</div>';
+                    row += '<div class="text-end">';
+                    row += '<button class="del btn btn-danger">Remove</button>';
+                    row += '</div>';
+                    row += '</div>';
 
-                $('.btn-success').css('display', 'block');
-                    $('.product-item').each(function () {
-                        var price = parseFloat($(this).find('p[id^="price_"]').text());
-                        var quantity = parseInt($(this).find('.quantity').val());
-                        totalAmount += price * quantity;
+                    $('#checkout').show();
+                    $('#all_order').append(row);
+
+                    updateTotalAmount();
+
+                    // Bind click event for dynamically created .del buttons
+                    $('.del').off('click').on('click', function() {
+                        var removedProduct = $(this).closest('.product-item');
+                        var removedProductId = removedProduct.find('.quantity').data('index');
+
+                        productsArray = productsArray.filter(function(prod) {
+                            return prod.id !== removedProductId;
+                        });
+
+                        updateTotalAmount();
+
+                        removedProduct.remove();
                     });
-                    $('#all_prod_total').css('display', 'block');
-                    $('#all_prod_total').text('Total Amount: ' + totalAmount.toFixed(2));
 
-                $('#customer').attr('disabled', 'disabled');
-                $('#all_order').append(rows);
-
-
-                $('.del').click(function () {
-                    var removedProduct = $(this).closest('.product-item');
-                    var productName = removedProduct.find('h4').text();
-                    var productId = removedProduct.find('.quantity').data('index');
-                    $('#checkout').hide();
-
-                    $('#product').append('<option value="' + productId + '">' + productName + '</option>');
-
-                    removedProduct.remove(); // Remove the product item
-                });
+                } catch (error) {
+                    console.error('Error parsing JSON:', error);
+                    $('#notsuccess').show().html('Product Added Failed');
+                }
             },
-            error: function () {
+            error: function() {
                 $('#notsuccess').show().html('Product Added Failed');
             }
         });
     });
-    $(document).on('change', '.quantity', function () {
-        var parent = $(this).closest('.product-item');
-        var index = $(this).data('index');
-        var qunid = $(this).val();
-        var price = parseFloat(parent.find('#price_' + index).text());
-        var total = price * qunid;
-        parent.find('#subtotal_' + index).text(total.toFixed(2));
+
+    $(document).on('change', '.quantity', function() {
+        var productId = $(this).data('index'); // Get productId from data-index attribute
+        var newQuantity = parseInt($(this).val(), 10); // Get new quantity selected
+
+        // Find the product object in productsArray by productId
+        var productIndex = productsArray.findIndex(function(prod) {
+            return productId === productId;
+        });
+
+        if (productIndex !== -1) {
+            // Update quantity in productsArray
+            productsArray[productIndex].quantity = newQuantity;
+
+            // Calculate new subtotal based on updated quantity
+            var price = productsArray[productIndex].price;
+            var newSubtotal = price * newQuantity;
+            productsArray[productIndex].subtotal = newSubtotal;
+
+            // Update subtotal displayed in the UI
+            var $subtotalElement = $('#subtotal_' + productId);
+            if ($subtotalElement.length > 0) {
+                $subtotalElement.text(newSubtotal.toFixed(2)); // Update subtotal text
+            }
+
+            // Optionally update other UI elements related to this product
+
+            // Call function to update total amount
+            updateTotalAmount();
+        } else {
+            console.log('Product with ID', productId, 'not found in productsArray.');
+        }
     });
 
 
-    $('#checkout').click(function (e) {
+    $('#checkout').click(function(e) {
         e.preventDefault();
-        product = product
         var customer = $('#customer').val();
-        var prod_qun = $('.quantity').val();
-        var prod_price = $('#price_0').text();
-        var prod_subtotal = $('#subtotal_0').text();
+
+        // Prepare data for checkout from productsArray
+        var checkoutData = {
+            customer: customer,
+            productsArray: productsArray, // Send all products to backend for checkout
+            actionName: 'checkout'
+        };
+
         $.ajax({
             type: "POST",
             url: "assets/php/ajx.php",
-            data: {
-                customer: customer,
-                product: product,
-                prod_qun: prod_qun,
-                prod_price: prod_price,
-                prod_subtotal: prod_subtotal,
-                actionName: 'checkout'
-            },
-            success: function (data) {
-                var data1 = JSON.parse(data);
-                if (data1.status == 'success') {
-                    $('.product-item').hide();
+            data: checkoutData,
+            success: function(data) {
+                var response = JSON.parse(data);
+                if (response.status == 'success') {
+                    $('.product-item').remove(); // Remove all product items from UI
                     $('.btn-success').hide();
                     $('#all_prod_total').hide();
                     $('#success').show().delay(2000).fadeOut().html("Product Checkout Successfully");
+                } else {
+                    $('#notsuccess').show().html('Failed to checkout products');
                 }
             },
-            error: function () {
+            error: function() {
                 $("#prod_form")[0].reset();
-                $('#notsuccess').show().html('Product Added Failed')
+                $('#notsuccess').show().html('Product Checkout Failed');
             }
         });
     });
 
-    $('#add_product').click(function (e) {
+    // Function to update total amount displayed
+    function updateTotalAmount() {
+        var totalAmount = 0;
+        productsArray.forEach(function(product) {
+            totalAmount += product.subtotal;
+        });
+
+        $('#all_prod_total').css('display', 'block');
+        $('#all_prod_total').text('Total Amount: ' + totalAmount.toFixed(2));
+    }
+
+
+
+    $('#add_product').click(function(e) {
         e.preventDefault();
         $('#add_product1').show();
         $('#add_customer1').hide();
@@ -134,8 +180,8 @@ $(document).ready(function () {
         $('#view_customer1').hide();
         $('#view_order1').hide();
         $('#add_order1').hide();
-
-        $('#prod_form').on('submit', function (e) {
+        $('#report1').hide()
+        $('#prod_form').on('submit', function(e) {
             e.preventDefault()
             if ($('#prod_name').val() == '') {
                 $('#prod_nameval').show().css('color', 'red');
@@ -160,7 +206,7 @@ $(document).ready(function () {
                     data: formData,
                     contentType: false,
                     processData: false,
-                    success: function (data) {
+                    success: function(data) {
                         console.log('done');
                         var data1 = JSON.parse(data);
                         if (data1.status == 'success') {
@@ -169,7 +215,7 @@ $(document).ready(function () {
                             $('#success').show().delay(2000).fadeOut().html("Product Added Successfully");
                         }
                     },
-                    error: function () {
+                    error: function() {
                         $("#prod_form")[0].reset();
                         $('#notsuccess').show().html('Product Added Failed')
                     }
@@ -178,7 +224,7 @@ $(document).ready(function () {
         })
     });
 
-    $('#view_product').click(function (e) {
+    $('#view_product').click(function(e) {
         e.preventDefault();
         $('#add_product1').hide();
         $('#add_customer1').hide();
@@ -186,16 +232,17 @@ $(document).ready(function () {
         $('#view_customer1').hide()
         $('#view_order1').hide()
         $('#add_order1').hide()
+        $('#report1').hide()
         $.ajax({
             type: "POST",
             url: "assets/php/ajx.php",
             data: {
                 actionName: 'view_product'
             },
-            success: function (data) {
+            success: function(data) {
                 data1 = $.parseJSON(data);
                 var rows = '';
-                $.each(data1, function (index, user) {
+                $.each(data1, function(index, user) {
                     var img = JSON.parse(user.prod_img)
                     rows += '<tr>';
                     rows += '<td>' + user.prod_id + '</td>';
@@ -212,15 +259,15 @@ $(document).ready(function () {
                 $('#result').html(rows);
                 $('#prod_tbl').DataTable();
 
-                $('.edit').on('click', function () {
+                $('.edit').on('click', function() {
                     var id = $(this).data('id');
                     fetchData(id);
-                    $(document).on('click', '#btn_update', function () {
+                    $(document).on('click', '#btn_update', function() {
                         updateData(id);
                     })
                 });
 
-                $('.delete').on('click', function (e) {
+                $('.delete').on('click', function(e) {
                     e.preventDefault();
                     var id = $(this).data('id');
                     if (confirm("Are you sure?")) {
@@ -231,7 +278,7 @@ $(document).ready(function () {
                                 id: id,
                                 actionName: 'prod_delete'
                             },
-                            success: function (response) {
+                            success: function(response) {
                                 var data = $.parseJSON(response);
                                 if (data.status === "success") {
                                     $('#success').show().delay(2000).fadeOut();
@@ -239,7 +286,7 @@ $(document).ready(function () {
                                     window.location.reload();
                                 }
                             },
-                            error: function (status, error) {
+                            error: function(status, error) {
                                 console.error("AJAX Error: " + status + error);
                             }
                         });
@@ -248,19 +295,19 @@ $(document).ready(function () {
                     }
                 })
             },
-            error: function (status, error) {
+            error: function(status, error) {
                 console.error("Fetch Error: " + status + error);
             }
         });
     });
 
-    $('#customer_phone').on('input', function () {
+    $('#customer_phone').on('input', function() {
         if ($(this).val().length > 10) {
             $(this).val($(this).val().substring(0, 10));
         }
     });
 
-    $('#add_customer').click(function (e) {
+    $('#add_customer').click(function(e) {
         e.preventDefault();
         $('#add_product1').hide();
         $('#add_customer1').show();
@@ -268,8 +315,8 @@ $(document).ready(function () {
         $('#view_customer1').hide();
         $('#add_order1').hide();
         $('#view_order1').hide();
-
-        $('#customer_form').on('submit', function (e) {
+        $('#report1').hide()
+        $('#customer_form').on('submit', function(e) {
             e.preventDefault();
 
             var isValid = true;
@@ -320,7 +367,7 @@ $(document).ready(function () {
                     data: formData,
                     contentType: false,
                     processData: false,
-                    success: function (data) {
+                    success: function(data) {
                         var data1 = JSON.parse(data);
                         if (data1.status == 'contacterror') {
                             $('#customer_phoneval').html('Contact Already exist');
@@ -338,7 +385,7 @@ $(document).ready(function () {
                             $('#success').show().delay(2000).fadeOut().html("Customer Added Successfully");
                         }
                     },
-                    error: function () {
+                    error: function() {
                         $("#prod_form")[0].reset();
                         $('#notsuccess').show().html('Product Added Failed');
                     }
@@ -348,7 +395,7 @@ $(document).ready(function () {
     });
 
 
-    $('#view_customer').click(function (e) {
+    $('#view_customer').click(function(e) {
         e.preventDefault();
         $('#add_product1').hide();
         $('#add_customer1').hide();
@@ -356,18 +403,18 @@ $(document).ready(function () {
         $('#view_customer1').show()
         $('#add_order1').hide()
         $('#view_order1').hide()
-
+        $('#report1').hide()
         $.ajax({
             type: "POST",
             url: "assets/php/ajx.php",
             data: {
                 actionName: 'view_customer'
             },
-            success: function (data) {
+            success: function(data) {
                 data1 = $.parseJSON(data);
                 console.log(data1)
                 var rows = '';
-                $.each(data1, function (index, user1) {
+                $.each(data1, function(index, user1) {
                     rows += '<tr>';
                     rows += '<td>' + user1.customer_id + '</td>';
                     rows += '<td>' + user1.customer_name + '</td>';
@@ -383,10 +430,10 @@ $(document).ready(function () {
                 $('#result1').html(rows);
                 $('#customer_tbl').DataTable();
 
-                $('.edit1').on('click', function () {
+                $('.edit1').on('click', function() {
                     var id = $(this).data('id');
                     fetchDatacustomer(id);
-                    $(document).on('click', '#btn_update1', function () {
+                    $(document).on('click', '#btn_update1', function() {
                         if ($('#customer_name').val() == '') {
                             $('#customer_nameval1').show().css('color', 'red');
                         }
@@ -411,16 +458,16 @@ $(document).ready(function () {
                                 data: formData,
                                 contentType: false,
                                 processData: false,
-                                success: function (data) {
+                                success: function(data) {
                                     $('#prod_nameval1,#prod_imgval1,#prod_qunval1,#prod_priceval1,#prod_detailval1').hide()
                                     $('#Update').modal('hide');
-                                    $('.alert-success').show().fadeOut(function () {
+                                    $('.alert-success').show().fadeOut(function() {
                                         // window.location.reload()
                                     });
                                     $('.alert-success').html("Data Updated Successfully");
                                     $('.alert-success').hide();
                                 },
-                                error: function () {
+                                error: function() {
                                     $('.alert-danger').show().delay(2000).fadeOut();
                                     $('.alert-danger').html("Data not Updated!!!");
                                     $('.alert-danger').hide();
@@ -429,7 +476,7 @@ $(document).ready(function () {
                         }
                     })
                 });
-                $('.delete1').on('click', function (e) {
+                $('.delete1').on('click', function(e) {
                     e.preventDefault();
                     var id = $(this).data('id');
                     console.log(id)
@@ -441,7 +488,7 @@ $(document).ready(function () {
                                 id: id,
                                 actionName: 'customer_delete'
                             },
-                            success: function (response) {
+                            success: function(response) {
                                 var data = $.parseJSON(response);
                                 if (data.status === "success") {
                                     $('#success').show().delay(2000).fadeOut();
@@ -449,8 +496,8 @@ $(document).ready(function () {
                                     window.location.reload();
                                 }
                             },
-                            error: function (status, error) {
-                                +                                console.error("AJAX Error: " + status + error);
+                            error: function(status, error) {
+                                +console.error("AJAX Error: " + status + error);
                             }
                         });
                     } else {
@@ -458,13 +505,13 @@ $(document).ready(function () {
                     }
                 })
             },
-            error: function (status, error) {
+            error: function(status, error) {
                 console.error("Fetch Error: " + status + error);
             }
         });
     });
 
-    $('#add_order').click(function (e) {
+    $('#add_order').click(function(e) {
         e.preventDefault();
         $('#add_product1').hide();
         $('#add_customer1').hide();
@@ -472,8 +519,85 @@ $(document).ready(function () {
         $('#view_customer1').hide()
         $('#add_order1').show()
         $('#view_order1').hide()
+        $('#report1').hide()
     });
-    $('#view_order').click(function (e) {
+    $('#report').click(function(e) {
+        e.preventDefault();
+        $('#add_product1').hide();
+        $('#add_customer1').hide();
+        $('#view_product1').hide();
+        $('#view_customer1').hide()
+        $('#add_order1').hide()
+        $('#view_order1').hide()
+        $('#report1').show()
+
+        $.ajax({
+            type: "POST",
+            url: "assets/php/ajx.php",
+            data: {
+                actionName: 'report'
+            },
+            success: function(data) {
+                console.log('aryan');
+
+                var productData = data;
+
+                // Initialize arrays to store labels, revenue data, and sales data
+                var labels = [];
+                var revenueData = [];
+                var salesData = [];
+
+                // Extract the necessary data from the productData array
+                for (var i = 0; i < productData.length; i++) {
+                    var product = productData[i];
+                    var revenue = product.revenue;
+                    var sales = product.sales;
+                    var productName = product.name;
+
+                    // Add the product name to the labels array
+                    labels.push(productName);
+
+                    // Add the revenue and sales data to their respective arrays
+                    revenueData.push(revenue);
+                    salesData.push(sales);
+                }
+
+                // Create a bar chart using Chart.js
+                var ctx = document.getElementById('productChart').getContext('2d');
+                var chart = new Chart(ctx, {
+
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                                label: 'Revenue',
+                                data: revenueData,
+                                backgroundColor: 'rgba(0,123,255,0.2)',
+                                borderColor: 'rgba(0,123,255,1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Sales',
+                                data: salesData,
+                                backgroundColor: 'rgba(255,99,132,0.2)',
+                                borderColor: 'rgba(255,99,132,1)',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                    }
+
+                });
+            },
+            error: function(status, error) {
+                console.error("Fetch Error: " + status + error);
+            }
+        });
+    });
+    $('#view_order').click(function(e) {
         e.preventDefault();
         $('#add_product1').hide();
         $('#add_customer1').hide();
@@ -481,6 +605,7 @@ $(document).ready(function () {
         $('#view_customer1').hide()
         $('#add_order1').hide()
         $('#view_order1').show()
+        $('#report1').hide()
 
         $.ajax({
             type: "POST",
@@ -488,11 +613,11 @@ $(document).ready(function () {
             data: {
                 actionName: 'view_order'
             },
-            success: function (data) {
+            success: function(data) {
                 console.log(data);
                 data1 = $.parseJSON(data);
                 var rows = '';
-                $.each(data1, function (index, data1) {
+                $.each(data1, function(index, data1) {
                     rows += '<tr>';
                     rows += '<td>' + data1.customer_product_id + '</td>';
                     rows += '<td>' + data1.customer_name + '</td>';
@@ -508,10 +633,10 @@ $(document).ready(function () {
                 $('#result3').html(rows);
                 $('#order_tbl').DataTable();
 
-                $('.edit1').on('click', function () {
+                $('.edit1').on('click', function() {
                     var id = $(this).data('id');
                     fetchDatacustomer(id);
-                    $(document).on('click', '#btn_update1', function () {
+                    $(document).on('click', '#btn_update1', function() {
                         if ($('#customer_name').val() == '') {
                             $('#customer_nameval1').show().css('color', 'red');
                         }
@@ -536,16 +661,16 @@ $(document).ready(function () {
                                 data: formData,
                                 contentType: false,
                                 processData: false,
-                                success: function (data) {
+                                success: function(data) {
                                     $('#prod_nameval1,#prod_imgval1,#prod_qunval1,#prod_priceval1,#prod_detailval1').hide()
                                     $('#Update').modal('hide');
-                                    $('.alert-success').show().fadeOut(function () {
+                                    $('.alert-success').show().fadeOut(function() {
                                         // window.location.reload()
                                     });
                                     $('.alert-success').html("Data Updated Successfully");
                                     $('.alert-success').hide();
                                 },
-                                error: function () {
+                                error: function() {
                                     $('.alert-danger').show().delay(2000).fadeOut();
                                     $('.alert-danger').html("Data not Updated!!!");
                                     $('.alert-danger').hide();
@@ -554,7 +679,7 @@ $(document).ready(function () {
                         }
                     })
                 });
-                $('.delete1').on('click', function (e) {
+                $('.delete1').on('click', function(e) {
                     e.preventDefault();
                     var id = $(this).data('id');
                     console.log(id)
@@ -566,7 +691,7 @@ $(document).ready(function () {
                                 id: id,
                                 actionName: 'customer_delete'
                             },
-                            success: function (response) {
+                            success: function(response) {
                                 var data = $.parseJSON(response);
                                 if (data.status === "success") {
                                     $('#success').show().delay(2000).fadeOut();
@@ -574,8 +699,8 @@ $(document).ready(function () {
                                     window.location.reload();
                                 }
                             },
-                            error: function (status, error) {
-                                +                                console.error("AJAX Error: " + status + error);
+                            error: function(status, error) {
+                                +console.error("AJAX Error: " + status + error);
                             }
                         });
                     } else {
@@ -583,7 +708,7 @@ $(document).ready(function () {
                     }
                 })
             },
-            error: function (status, error) {
+            error: function(status, error) {
                 console.error("Fetch Error: " + status + error);
             }
         });
@@ -601,12 +726,12 @@ $(document).ready(function () {
                 actionName: 'fetch'
             },
             dataType: 'JSON',
-            success: function (data) {
+            success: function(data) {
 
                 $('#prod_name1').val(data[0]);
                 var img = JSON.parse(data[1]);
                 var add_img = '';
-                $.each(img, function (index, user1) {
+                $.each(img, function(index, user1) {
                     add_img += ' <img src="assets/php/uploads/' + img[index] + '" height="50px" width="50px"> ';
                 });
                 $('#add_img').html(add_img);
@@ -616,11 +741,12 @@ $(document).ready(function () {
 
                 $('#Update').modal('show');
             },
-            error: function (xhr) {
+            error: function(xhr) {
                 console.error(xhr.responseText);
             }
         });
     }
+
     function fetchDatacustomer(id) {
 
         console.log(id);
@@ -633,7 +759,7 @@ $(document).ready(function () {
                 actionName: 'customerfetch'
             },
             dataType: 'JSON',
-            success: function (data) {
+            success: function(data) {
 
                 $('#customer_name1').val(data[0]);
                 $('#customer_email1').val(data[1]);
@@ -647,11 +773,12 @@ $(document).ready(function () {
 
                 $('#Update1').modal('show');
             },
-            error: function (xhr) {
+            error: function(xhr) {
                 console.error(xhr.responseText);
             }
         });
     }
+
     function updateData(id) {
 
         if ($('#prod_name1').val() == '') {
@@ -689,16 +816,16 @@ $(document).ready(function () {
                 data: formData,
                 contentType: false,
                 processData: false,
-                success: function (data) {
+                success: function(data) {
                     $('#prod_nameval1,#prod_imgval1,#prod_qunval1,#prod_priceval1,#prod_detailval1').hide()
                     $('#Update').modal('hide');
-                    $('.alert-success').show().fadeOut(function () {
+                    $('.alert-success').show().fadeOut(function() {
                         // window.location.reload()
                     });
                     $('.alert-success').html("Data Updated Successfully");
                     $('.alert-success').hide();
                 },
-                error: function () {
+                error: function() {
                     $('.alert-danger').show().delay(2000).fadeOut();
                     $('.alert-danger').html("Data not Updated!!!");
                     $('.alert-danger').hide();

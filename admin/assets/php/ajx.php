@@ -38,4 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['actionName']) && $_POST['actionName'] == 'view_order') {
         view_order();
     }
+    if (isset($_POST['actionName']) && $_POST['actionName'] == 'report') {
+        report();
+    }
 }
