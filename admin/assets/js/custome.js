@@ -3,7 +3,7 @@ $(document).ready(function() {
     $('#product,#customer').select2();
 
     var productsArray = [];
-
+    console.log('aryan friday')
     $('#order_btn').click(function(e) {
         e.preventDefault();
         var customer = $('#customer').val();
