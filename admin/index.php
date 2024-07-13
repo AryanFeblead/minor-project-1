@@ -466,7 +466,23 @@ require ('assets/php/conn.php');
             </table>
           </div>
           <div id="report1">
-            <div style="width:600px; margin:50px auto; border:1px solid #ddd;">
+            <div class="container">
+            <div class="mb-3 d-flex flex-column mx-5" style="width: 70%;">
+              <select id="customer_report" class="form-select mb-3" aria-label="Default select example">
+                <option selected>Select Customer</option>
+                <?php
+                $query = "SELECT * FROM `customer_tbl`";
+                $a = mysqli_query($conn, $query);
+                $b = mysqli_num_rows($a);
+
+                while ($row = mysqli_fetch_assoc($a)) {
+                  echo '<option value=' . $row["customer_id"] . '> ' . $row["customer_name"] . '</option>';
+                }
+                ?>
+              </select>
+            </div>
+            </div>
+            <div id="chart1" style="width:600px; margin:50px auto; border:1px solid #ddd;">
               <canvas id="productChart"></canvas>
             </div>
           </div>

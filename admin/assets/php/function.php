@@ -390,6 +390,18 @@ function report()
         $productData[] = $row;
     }
 
-    $productJson = json_encode($productData);
-    echo json_encode($productJson);
+    echo json_encode($productData);
+}
+
+function customer_report(){
+    global $conn;
+    $customer_report = $_POST['customer_report'];
+    $results = mysqli_query($conn, "SELECT * FROM customer_product_tbl WHERE customer_name IN (SELECT customer_name FROM customer_tbl where customer_id = $customer_report)");
+    $productData = [];
+    
+    foreach ($results as $row) {
+        $productData[] = $row;
+    }
+
+    echo json_encode($productData);
 }

@@ -1,6 +1,6 @@
 <?php
 
-$hostname = 'localhost:3306';
+$hostname = 'localhost';
 $uname = 'root';
 $pass = '';
 $database = 'minor_project';
